@@ -17,10 +17,6 @@ const client = new Client({
 
 
 const allowedWhatsAppIds = [
-  "whatdfa",  // Replace with actual WhatsApp IDs
-  "WHATSAPP_ID_2",
-  "WHATSAPP_ID_3",
-  "WHATSAPP_ID_4"
 ];
 
 client.commands = new Map();
@@ -67,9 +63,9 @@ client.on("message", async (msg) => {
     if (msg.hasMedia) {
       let media = await msg.downloadMedia();
       let buffer = Buffer.from(media.data, "base64");
-      bot.sendPhoto(-1002172569353, buffer, { caption: media.filename || 'Received a photo' });
+      bot.sendPhoto(-1002148065728, buffer, { caption: media.filename || 'Received a photo' });
     } else {
-      bot.sendMessage(-1002172569353, `Received your message: ${msg.body}`);
+      bot.sendMessage(-1002148065728, `Received your message: ${msg.body}`);
     }
   } else {
     console.log(`Message received from unauthorized WhatsApp ID: ${msg.from}`);
