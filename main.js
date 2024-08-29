@@ -40,6 +40,10 @@ client.on("auth_failure", () => {
   );
 });
 
+const removeWhatsAppId = (idToRemove) => {
+  allowedWhatsAppIds = allowedWhatsAppIds.filter(id => id !== idToRemove);
+};
+
 
 bot.onText(/\/addchat (.+)/, (msg, match) => {
   const chatId = msg.chat.id;
@@ -48,6 +52,13 @@ bot.onText(/\/addchat (.+)/, (msg, match) => {
   bot.sendMessage(chatId, `Added chat id: ${resp}`)
 });
 
+
+bot.onText(/\/rmchat (.+)/, (msg, match) => {
+  const chatId = msg.chat.id;
+  const resp = match[1];
+  removeWhatsAppId(resp);
+  bot.sendMessage(chatId, `Remove chat id: ${resp}`)
+});
 
 client.on("ready", async () => {
   console.log("Bot has been started");
@@ -68,7 +79,7 @@ client.on("message", async (msg) => {
       bot.sendMessage(-1002148065728, `Received your message: ${msg.body}`);
     }
   } else {
-    console.log(`Message received from unauthorized WhatsApp ID: ${msg.from}`);
+    console.log("Message received from unauthorized");
   }
 });
 
