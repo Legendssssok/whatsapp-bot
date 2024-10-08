@@ -87,7 +87,8 @@ function checkUserRole(userId, role, callback) {
     }
 }
 
-// Telegram command to connect WhatsApp
+// To modify your existing Telegram bot code to send the QR code as a link instead of sending it as a photo while keeping the rest of the functionality intact, you can adjust the part where you send the QR code. Below is the updated code:
+
 telegramBot.onText(/\/connect/, (msg) => {
     const userId = msg.from.id.toString();
 
@@ -114,52 +115,55 @@ telegramBot.onText(/\/connect/, (msg) => {
             telegramBot.sendMessage(chatId, '⏳ <b>Please wait while we generate the QR code...</b>', { parse_mode: 'HTML' })
                 .then((waitMessage) => {
                     const waitMessageId = waitMessage.message_id;
+
                     // Handle QR code generation
                     whatsappClient.on('qr', (qr) => {
                         if (!isConnecting) return; // Prevent further actions if canceled
 
+                        // Generate the QR code link
                         const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
                         
-                            // Send the QR code image to the user with an inline keyboard for cancel
-                            const cancelKeyboard = {
-                                inline_keyboard: [
-                                    [{ text: '🚫 Cancel', callback_data: 'cancel' }]
-                                ]
-                            };
+                        // Send the QR code link to the user with an inline keyboard for cancel
+                        const cancelKeyboard = {
+                            inline_keyboard: [
+                                [{ text: '🚫 Cancel', callback_data: 'cancel' }]
+                            ]
+                        };
 
-                            telegramBot.sendMessage(chatId, `📲 <b>Please scan this QR code to connect to WhatsApp:</b> <a href="${qrLink}">QR Code</a>`, {
-                                parse_mode: 'HTML',
-                                reply_markup: cancelKeyboard
-                                }).then((message) => {
-                                qrCodeMessageId = message.message_id;
+                        telegramBot.sendMessage(chatId, `📲 <b>Please scan this QR code to connect to WhatsApp:</b> <a href="${qrLink}">QR Code</a>`, {
+                            parse_mode: 'HTML',
+                            reply_markup: cancelKeyboard
+                        }).then((message) => {
+                            qrCodeMessageId = message.message_id;
 
-                                // Delete the initial wait message after sending the QR code image
-                                telegramBot.deleteMessage(chatId, waitMessageId).catch(err => {
-                                    console.error('Error deleting wait message:', err);
-                                });
-
-                                // Set a timeout to allow the user to cancel the connection
-                                qrCodeTimeout = setTimeout(() => {
-                                    isConnecting = false;
-                                    telegramBot.deleteMessage(chatId, qrCodeMessageId)
-                                    telegramBot.sendMessage(chatId, '❌ Connection process timed out.');
-                                }, 120000); // 2 minutes timeout
-
-                            }).catch(err => {
-                                console.error('Error sending QR code image:', err);
-                                isConnecting = false; // Reset state
-                                telegramBot.sendMessage(chatId, 'Failed to send QR code image.');
+                            // Delete the initial wait message after sending the QR code link
+                            telegramBot.deleteMessage(chatId, waitMessageId).catch(err => {
+                                console.error('Error deleting wait message:', err);
                             });
+
+                            // Set a timeout to allow the user to cancel the connection
+                            qrCodeTimeout = setTimeout(() => {
+                                isConnecting = false;
+                                telegramBot.deleteMessage(chatId, qrCodeMessageId).catch(err => {
+                                    console.error('Error deleting QR code message:', err);
+                                });
+                                telegramBot.sendMessage(chatId, '❌ Connection process timed out.');
+                            }, 120000); // 2 minutes timeout
+
+                        }).catch(err => {
+                            console.error('Error sending QR code link:', err);
+                            isConnecting = false; // Reset state
+                            telegramBot.sendMessage(chatId, 'Failed to send QR code link.');
                         });
                     });
 
-                    // Notify user upon successful login and delete the QR code image
+                    // Notify user upon successful login
                     whatsappClient.on('ready', (session) => {
                         isConnected = true;
                         isConnecting = false; // Reset the connecting flag
                         clearTimeout(qrCodeTimeout); // Clear any pending timeout
 
-                        console.log('Session data:', session); // Add this line to debug
+                        console.log('Session data:', session); // Debugging information
 
                         telegramBot.sendMessage(chatId, '✅ <b>Your WhatsApp account has been successfully logged in!</b>', {
                             parse_mode: 'HTML'
@@ -168,11 +172,9 @@ telegramBot.onText(/\/connect/, (msg) => {
                             console.log('WhatsApp session saved.');
 
                             if (qrCodeMessageId) {
-                                telegramBot.deleteMessage(chatId, qrCodeMessageId)
-                                    .then(() => { })
-                                    .catch(err => {
-                                        console.error('Error deleting QR code message:', err);
-                                    });
+                                telegramBot.deleteMessage(chatId, qrCodeMessageId).catch(err => {
+                                    console.error('Error deleting QR code message:', err);
+                                });
                             } else {
                                 console.warn('No QR code message ID available for deletion.');
                             }
@@ -195,6 +197,7 @@ telegramBot.onText(/\/connect/, (msg) => {
         }
     });
 });
+
 
 // Command to disconnect WhatsApp session (Admins and Owner)
 telegramBot.onText(/\/disconnect/, (msg) => {
