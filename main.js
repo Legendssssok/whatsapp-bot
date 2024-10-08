@@ -34,11 +34,11 @@ function saveSession(session) {
 }
 
 // Initialize Telegram Bot
-const telegramToken = '7277342284:AAEaLk-46sVq0eSllwY6vyIZB8ouC6ULdxs';
+const telegramToken = '7387494954:AAGEM4IWA803e255Xh6hRMjkmF_goVSy1AM';
 const telegramBot = new TelegramBot(telegramToken, { polling: true });
 
 // Fixed Owner ID
-const OWNER_ID = '5252650067'; // Replace with the actual owner's Telegram ID
+const OWNER_ID = '6003246364'; // Replace with the actual owner's Telegram ID
 
 // Initialize SQLite for admin management
 const db = new sqlite3.Database(':memory:');
@@ -118,17 +118,8 @@ telegramBot.onText(/\/connect/, (msg) => {
                     whatsappClient.on('qr', (qr) => {
                         if (!isConnecting) return; // Prevent further actions if canceled
 
-                        qrcode.toDataURL(qr, (err, url) => {
-                            if (err) {
-                                console.error('QR Code generation error:', err);
-                                telegramBot.sendMessage(chatId, 'Failed to generate QR code.');
-                                isConnecting = false; // Reset state
-                                return;
-                            }
-
-                            const base64Data = url.replace(/^data:image\/png;base64,/, '');
-                            const buffer = Buffer.from(base64Data, 'base64');
-
+                        const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
+                        
                             // Send the QR code image to the user with an inline keyboard for cancel
                             const cancelKeyboard = {
                                 inline_keyboard: [
@@ -136,12 +127,11 @@ telegramBot.onText(/\/connect/, (msg) => {
                                 ]
                             };
 
-                            telegramBot.sendPhoto(chatId, buffer, {
-                                caption: '📲 <b>Please scan this QR code to connect to WhatsApp.</b>',
+                            telegramBot.sendMessage(chatId, `📲 <b>Please scan this QR code to connect to WhatsApp:</b> <a href="${qrLink}">QR Code</a>`, {
                                 parse_mode: 'HTML',
                                 reply_markup: cancelKeyboard
-                            }).then((photoMessage) => {
-                                qrCodeMessageId = photoMessage.message_id;
+                                }).then((message) => {
+                                qrCodeMessageId = message.message_id;
 
                                 // Delete the initial wait message after sending the QR code image
                                 telegramBot.deleteMessage(chatId, waitMessageId).catch(err => {
